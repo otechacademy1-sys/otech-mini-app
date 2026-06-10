@@ -70,13 +70,12 @@
     </div>
 
     <script>
-        // Initialize Telegram Web App
         const tg = window.Telegram.WebApp;
-        tg.ready(); // tell Telegram the Mini App is ready
+        tg.ready();
 
         function startLearning() {
-            // Send data back to the bot (we'll handle this in Phase 2)
             tg.sendData("start_learning");
+            tg.close();
         }
     </script>
 </body>
