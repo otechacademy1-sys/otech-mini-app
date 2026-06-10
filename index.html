@@ -39,16 +39,13 @@
         .btn.gold:hover { background: #d4a82e; }
         .btn.green { background: #2e7d32; color: white; border: none; }
         .btn.green:hover { background: #1b5e20; }
-        .btn.red { background: #c62828; color: white; border: none; }
-        .btn.red:hover { background: #8e0000; }
         .back-btn { background: transparent; border: 1px solid #2a3a5a; color: #aaa; margin-top: 15px; }
         .hidden { display: none; }
-        .main-menu-btn { margin-bottom: 8px; }
     </style>
 </head>
 <body>
 
-    <!-- MAIN MENU SCREEN -->
+    <!-- MAIN MENU -->
     <div id="screen-main">
         <div class="header">
             <h1>🎓 O'TECH Academy</h1>
@@ -56,17 +53,15 @@
         </div>
         <div class="btn-grid">
             <button class="btn gold" onclick="showScreen('screen-grades')">📚 Start Learning</button>
-            <button class="btn" onclick="sendToBot('ai_teacher')">🤖 Ask AI Teacher</button>
+            <button class="btn" onclick="openBot('ai_teacher')">🤖 Ask AI Teacher</button>
             <button class="btn green" onclick="showScreen('screen-premium')">🔓 Get Premium Access</button>
             <button class="btn" onclick="showScreen('screen-contact')">📞 Contact Admin</button>
         </div>
     </div>
 
-    <!-- GRADE SELECTION SCREEN -->
+    <!-- GRADE SELECTION -->
     <div id="screen-grades" class="hidden">
-        <div class="header">
-            <h1>Choose Your Grade</h1>
-        </div>
+        <div class="header"><h1>Choose Your Grade</h1></div>
         <div class="btn-grid">
             <button class="btn gold" onclick="selectGrade('grade9')">⭐ GRADE 9</button>
             <button class="btn gold" onclick="selectGrade('grade10')">💫 GRADE 10</button>
@@ -75,30 +70,23 @@
         <button class="btn back-btn" onclick="showScreen('screen-main')">← Back to Menu</button>
     </div>
 
-    <!-- SUBJECT SELECTION SCREEN -->
+    <!-- SUBJECT SELECTION -->
     <div id="screen-subjects" class="hidden">
-        <div class="header">
-            <h1 id="subject-header">Subjects</h1>
-        </div>
+        <div class="header"><h1 id="subject-header">Subjects</h1></div>
         <div id="subject-buttons" class="btn-grid"></div>
         <button class="btn back-btn" onclick="showScreen('screen-grades')">← Back to Grades</button>
     </div>
 
-    <!-- CHAPTER SELECTION SCREEN -->
+    <!-- CHAPTER SELECTION -->
     <div id="screen-chapters" class="hidden">
-        <div class="header">
-            <h1 id="chapter-header">Chapters</h1>
-        </div>
+        <div class="header"><h1 id="chapter-header">Chapters</h1></div>
         <div id="chapter-buttons" class="btn-grid"></div>
         <button class="btn back-btn" onclick="goBackToSubjects()">← Back to Subjects</button>
     </div>
 
-    <!-- PREMIUM SCREEN -->
+    <!-- PREMIUM -->
     <div id="screen-premium" class="hidden">
-        <div class="header">
-            <h1>🔓 Premium Access</h1>
-            <p>200 Birr — Unlock Everything</p>
-        </div>
+        <div class="header"><h1>🔓 Premium Access</h1><p>200 Birr — Unlock Everything</p></div>
         <div class="btn-grid">
             <button class="btn gold" onclick="showScreen('screen-telebirr')">💳 Pay with Telebirr</button>
             <button class="btn gold" onclick="showScreen('screen-bank')">🏦 Bank Transfer</button>
@@ -106,40 +94,34 @@
         <button class="btn back-btn" onclick="showScreen('screen-main')">← Back to Menu</button>
     </div>
 
-    <!-- TELEBIRR SCREEN -->
+    <!-- TELEBIRR -->
     <div id="screen-telebirr" class="hidden">
-        <div class="header">
-            <h1>💳 Telebirr Payment</h1>
-        </div>
+        <div class="header"><h1>💳 Telebirr Payment</h1></div>
         <p style="text-align:center; line-height:2;">
             Send <b>200 Birr</b> to:<br>
             📱 <b>0931206217</b><br>
             👤 <b>Fantay Zenebe</b>
         </p>
-        <button class="btn green" onclick="sendToBot('i_have_paid')" style="margin-top:20px;">✅ I Have Paid</button>
+        <button class="btn green" onclick="openBot('i_have_paid')" style="margin-top:20px;">✅ I Have Paid</button>
         <button class="btn back-btn" onclick="showScreen('screen-premium')">← Back</button>
     </div>
 
-    <!-- BANK SCREEN -->
+    <!-- BANK -->
     <div id="screen-bank" class="hidden">
-        <div class="header">
-            <h1>🏦 Bank Transfer</h1>
-        </div>
+        <div class="header"><h1>🏦 Bank Transfer</h1></div>
         <p style="text-align:center; line-height:2;">
             <b>Commercial Bank of Ethiopia</b><br>
             Account: <b>1000607421416</b><br>
             Name: <b>Fantay Zenebe</b><br>
             Send: <b>200 Birr</b>
         </p>
-        <button class="btn green" onclick="sendToBot('i_have_paid')" style="margin-top:20px;">✅ I Have Paid</button>
+        <button class="btn green" onclick="openBot('i_have_paid')" style="margin-top:20px;">✅ I Have Paid</button>
         <button class="btn back-btn" onclick="showScreen('screen-premium')">← Back</button>
     </div>
 
-    <!-- CONTACT SCREEN -->
+    <!-- CONTACT -->
     <div id="screen-contact" class="hidden">
-        <div class="header">
-            <h1>📞 Contact Admin</h1>
-        </div>
+        <div class="header"><h1>📞 Contact Admin</h1></div>
         <p style="text-align:center; line-height:2;">
             👤 <b>@Fantay3</b><br>
             📱 <b>0931206217</b><br>
@@ -153,7 +135,8 @@
         tg.ready();
         tg.expand();
 
-        // Data structure
+        const BOT_USERNAME = "myhighschoolstudybot";
+
         const grades = {
             grade9: {
                 name: "⭐ GRADE 9",
@@ -190,21 +173,16 @@
 
         let currentGrade = null;
         let currentStream = null;
-        let currentSubject = null;
 
-        // Screen navigation
-        function showScreen(screenId) {
+        function showScreen(id) {
             document.querySelectorAll('[id^="screen-"]').forEach(el => el.classList.add('hidden'));
-            document.getElementById(screenId).classList.remove('hidden');
+            document.getElementById(id).classList.remove('hidden');
         }
 
-        // Send command to bot and close Mini App
-        function sendToBot(command) {
-            tg.sendData(command);
-            tg.close();
+        function openBot(command) {
+            window.location.href = `https://t.me/${BOT_USERNAME}?start=${command}`;
         }
 
-        // Grade selection
         function selectGrade(gradeId) {
             currentGrade = gradeId;
             const grade = grades[gradeId];
@@ -219,14 +197,11 @@
             document.getElementById('subject-header').textContent = grade.name;
             const container = document.getElementById('subject-buttons');
             container.innerHTML = '';
-            for (const [streamId, stream] of Object.entries(grade.streams)) {
+            for (const [id, stream] of Object.entries(grade.streams)) {
                 const btn = document.createElement('button');
                 btn.className = 'btn';
                 btn.textContent = stream.name;
-                btn.onclick = () => {
-                    currentStream = streamId;
-                    showSubjectSelection(stream.subjects, stream.name);
-                };
+                btn.onclick = () => { currentStream = id; showSubjectSelection(stream.subjects, stream.name); };
                 container.appendChild(btn);
             }
             showScreen('screen-subjects');
@@ -236,47 +211,40 @@
             document.getElementById('subject-header').textContent = title;
             const container = document.getElementById('subject-buttons');
             container.innerHTML = '';
-            for (const [subjId, subjName] of Object.entries(subjects)) {
+            for (const [id, name] of Object.entries(subjects)) {
                 const btn = document.createElement('button');
                 btn.className = 'btn';
-                btn.textContent = subjName;
-                btn.onclick = () => selectSubject(subjId, subjName);
+                btn.textContent = name;
+                btn.onclick = () => selectSubject(id, name);
                 container.appendChild(btn);
             }
             showScreen('screen-subjects');
         }
 
         function selectSubject(subjectId, subjectName) {
-            currentSubject = subjectId;
             const chapters = ["Chapter 1 (Free)", "Chapter 2", "Chapter 3", "Chapter 4", "Chapter 5"];
             document.getElementById('chapter-header').textContent = subjectName;
             const container = document.getElementById('chapter-buttons');
             container.innerHTML = '';
-            chapters.forEach((ch, index) => {
+            chapters.forEach((ch, i) => {
                 const btn = document.createElement('button');
-                btn.className = 'btn' + (index === 0 ? ' gold' : '');
+                btn.className = 'btn' + (i === 0 ? ' gold' : '');
                 btn.textContent = ch;
-                btn.onclick = () => selectChapter(index + 1);
+                btn.onclick = () => {
+                    let cmd = `ch_${currentGrade}_${subjectId}_${i + 1}`;
+                    if (currentStream) cmd += `_${currentStream}`;
+                    openBot(cmd);
+                };
                 container.appendChild(btn);
             });
             showScreen('screen-chapters');
         }
 
-        function selectChapter(chapterNum) {
-            let data = `chapter_${currentGrade}_${currentSubject}_${chapterNum}`;
-            if (currentStream) data += `_${currentStream}`;
-            tg.sendData(data);
-            tg.close();
-        }
-
         function goBackToSubjects() {
             if (currentGrade) {
                 const grade = grades[currentGrade];
-                if (grade.streams) {
-                    showStreamSelection(grade);
-                } else {
-                    showSubjectSelection(grade.subjects, grade.name);
-                }
+                if (grade.streams) showStreamSelection(grade);
+                else showSubjectSelection(grade.subjects, grade.name);
             }
         }
     </script>
