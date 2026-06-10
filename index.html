@@ -70,13 +70,14 @@
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.ready();
+    const tg = window.Telegram.WebApp;
+    tg.ready();
 
-        function startLearning() {
-            tg.sendData("start_learning");
-            tg.close();
-        }
-    </script>
+    function startLearning() {
+        alert("Button clicked! Sending data...");
+        tg.sendData("start_learning");
+        tg.close();
+    }
+</script>
 </body>
 </html>
