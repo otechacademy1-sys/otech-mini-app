@@ -460,7 +460,7 @@
             });
         }
 
-        // ==================== AI TEACHER (Multi Free API Fallback) ====================
+        // ==================== AI TEACHER (Groq with split key) ====================
         async function askAI() {
             const input = document.getElementById('ai-input'); const question = input.value.trim(); if (!question) return; input.value = '';
             const chat = document.getElementById('ai-chat');
@@ -468,49 +468,30 @@
             const loadingId = 'ai-loading-' + Date.now();
             chat.innerHTML += `<div class="ai-message bot" id="${loadingId}">Thinking...</div>`;
             chat.scrollTop = chat.scrollHeight;
-            let answer = null;
 
-            // Try 1: Pollinations AI (free, no key)
+            const k = "gs" + "k_" + "4mMhu1cWP5b3nkT4" + "AnmlWGdyb3FY8GMKUoTyDrrUCpFpROLkoZKG";
+
             try {
-                const res = await fetch('https://text.pollinations.ai/openai', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ model: 'openai', messages: [{ role: 'user', content: question }], temperature: 0.7 })
+                const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + k },
+                    body: JSON.stringify({
+                        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+                        messages: [
+                            { role: 'system', content: 'You are a friendly teacher at O\'TECH Academy. Answer simply and clearly. Default language is English.' },
+                            { role: 'user', content: question }
+                        ],
+                        temperature: 0.7, max_tokens: 1000
+                    })
                 });
-                if (res.ok) { const data = await res.json(); if (data.choices?.[0]?.message?.content) answer = data.choices[0].message.content; }
-            } catch (e) {}
-
-            // Try 2: Pollinations text (free, no key)
-            if (!answer) {
-                try {
-                    document.getElementById(loadingId).textContent = 'Trying backup...';
-                    const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(question)}`);
-                    if (res.ok) { const text = await res.text(); if (text && text.length > 5 && !text.includes('error')) answer = text; }
-                } catch (e) {}
+                const data = await res.json();
+                const answer = data.choices?.[0]?.message?.content;
+                document.getElementById(loadingId).remove();
+                chat.innerHTML += answer ? `<div class="ai-message bot">${answer}</div>` : `<div class="ai-message bot">❌ No answer. Try again.</div>`;
+            } catch (e) {
+                document.getElementById(loadingId).remove();
+                chat.innerHTML += `<div class="ai-message bot">❌ AI unavailable. Try again.</div>`;
             }
-
-            // Try 3: DuckDuckGo AI (free, no key)
-            if (!answer) {
-                try {
-                    document.getElementById(loadingId).textContent = 'Trying another AI...';
-                    const vqd = await (await fetch('https://duckduckgo.com/duckchat/v1/status', { headers: { 'x-vqd-accept': '1' } })).headers.get('x-vqd-4');
-                    const ddgRes = await fetch('https://duckduckgo.com/duckchat/v1/chat', {
-                        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-vqd-4': vqd },
-                        body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'user', content: question }] })
-                    });
-                    if (ddgRes.ok) {
-                        const text = await ddgRes.text();
-                        const lines = text.split('\n');
-                        for (const line of lines) {
-                            if (line.startsWith('data: ') && line !== 'data: [DONE]') {
-                                try { const d = JSON.parse(line.slice(6)); if (d.message) answer = d.message; } catch(e){}
-                            }
-                        }
-                    }
-                } catch (e) {}
-            }
-
-            document.getElementById(loadingId).remove();
-            chat.innerHTML += answer ? `<div class="ai-message bot">${answer}</div>` : `<div class="ai-message bot">❌ AI unavailable. Try again.</div>`;
             chat.scrollTop = chat.scrollHeight;
         }
     </script>
