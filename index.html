@@ -13,6 +13,8 @@
             --gold: #f0c040;
             --border: #2a3a5a;
             --hover: #2a3a5a;
+            --correct: #2e7d32;
+            --wrong: #c62828;
         }
         .light-mode {
             --bg: #f5f5f5;
@@ -55,10 +57,8 @@
         .btn:hover { background: var(--hover); }
         .btn.gold { background: var(--gold); color: #0a1628; font-weight: bold; border: none; }
         .btn.gold:hover { background: #d4a82e; }
-        .btn.green { background: #2e7d32; color: white; border: none; }
-        .btn.green:hover { background: #1b5e20; }
-        .btn.red { background: #c62828; color: white; border: none; }
-        .btn.red:hover { background: #8e0000; }
+        .btn.green { background: var(--correct); color: white; border: none; }
+        .btn.red { background: var(--wrong); color: white; border: none; }
         .btn.small { padding: 8px 16px; font-size: 13px; width: auto; display: inline-block; }
         .back-btn { background: transparent; border: 1px solid var(--border); color: #aaa; margin-top: 15px; }
         .hidden { display: none; }
@@ -114,6 +114,40 @@
             font-size: 15px;
         }
         .ai-input-row button { width: 50px; border-radius: 12px; }
+        .quiz-question {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .quiz-question h3 { margin-bottom: 10px; color: var(--gold); }
+        .quiz-option {
+            background: var(--hover);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .quiz-option:hover { background: var(--gold); color: #0a1628; }
+        .quiz-option.correct { background: var(--correct); color: white; }
+        .quiz-option.wrong { background: var(--wrong); color: white; }
+        .quiz-option.disabled { pointer-events: none; opacity: 0.7; }
+        .explanation {
+            background: var(--border);
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        .score-display {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--gold);
+            margin: 15px 0;
+        }
         @media (max-width: 600px) {
             body { padding: 10px; }
             .header { padding: 10px 0; }
@@ -172,11 +206,20 @@
         <button class="btn back-btn" onclick="goBackToSubjects()">← Back to Subjects</button>
     </div>
 
+    <!-- QUIZ SCREEN -->
+    <div id="screen-quiz" class="hidden">
+        <div class="header"><h1 id="quiz-title">Quiz</h1></div>
+        <div class="score-display" id="quiz-score"></div>
+        <div id="quiz-container"></div>
+        <button class="btn gold" id="quiz-finish-btn" onclick="finishQuiz()" style="display:none;">Finish Quiz</button>
+        <button class="btn back-btn" onclick="goBackToChapters()">← Back to Chapters</button>
+    </div>
+
     <!-- AI TEACHER -->
     <div id="screen-ai" class="hidden">
-        <div class="header"><h1>🤖 AI Teacher</h1><p>Ask any question — I'll explain simply!</p></div>
+        <div class="header"><h1>🤖 AI Teacher</h1><p>Ask any question!</p></div>
         <div class="ai-chat" id="ai-chat">
-            <div class="ai-message bot">Hello! I'm your AI Teacher. Ask me anything about your subjects!</div>
+            <div class="ai-message bot">Hello! I'm your AI Teacher. Ask me anything!</div>
         </div>
         <div class="ai-input-row">
             <input type="text" id="ai-input" placeholder="Type your question..." onkeypress="if(event.key==='Enter')askAI()">
@@ -187,7 +230,7 @@
 
     <!-- PREMIUM -->
     <div id="screen-premium" class="hidden">
-        <div class="header"><h1>🔓 Premium Access</h1><p>200 Birr — Unlock Everything</p></div>
+        <div class="header"><h1>🔓 Premium Access</h1><p>200 Birr</p></div>
         <div class="btn-grid">
             <button class="btn gold" onclick="showScreen('screen-telebirr')">💳 Pay with Telebirr</button>
             <button class="btn gold" onclick="showScreen('screen-bank')">🏦 Bank Transfer</button>
@@ -195,56 +238,33 @@
         <button class="btn back-btn" onclick="showScreen('screen-main')">← Back to Menu</button>
     </div>
 
-    <!-- TELEBIRR -->
+    <!-- TELEBIRR / BANK / CONTACT / BOOKMARKS (same as before) -->
     <div id="screen-telebirr" class="hidden">
-        <div class="header"><h1>💳 Telebirr Payment</h1></div>
-        <p style="text-align:center; line-height:2;">
-            Send <b>200 Birr</b> to:<br>
-            📱 <b>0931206217</b><br>
-            👤 <b>Fantay Zenebe</b>
-        </p>
+        <div class="header"><h1>💳 Telebirr</h1></div>
+        <p style="text-align:center;line-height:2;">Send 200 Birr to:<br>📱 0931206217<br>👤 Fantay Zenebe</p>
         <button class="btn green" onclick="openBot('i_have_paid')" style="margin-top:20px;">✅ I Have Paid</button>
         <button class="btn back-btn" onclick="showScreen('screen-premium')">← Back</button>
     </div>
-
-    <!-- BANK -->
     <div id="screen-bank" class="hidden">
-        <div class="header"><h1>🏦 Bank Transfer</h1></div>
-        <p style="text-align:center; line-height:2;">
-            <b>Commercial Bank of Ethiopia</b><br>
-            Account: <b>1000607421416</b><br>
-            Name: <b>Fantay Zenebe</b><br>
-            Send: <b>200 Birr</b>
-        </p>
+        <div class="header"><h1>🏦 Bank</h1></div>
+        <p style="text-align:center;line-height:2;">Commercial Bank of Ethiopia<br>1000607421416<br>Fantay Zenebe</p>
         <button class="btn green" onclick="openBot('i_have_paid')" style="margin-top:20px;">✅ I Have Paid</button>
         <button class="btn back-btn" onclick="showScreen('screen-premium')">← Back</button>
     </div>
-
-    <!-- CONTACT -->
     <div id="screen-contact" class="hidden">
-        <div class="header"><h1>📞 Contact Admin</h1></div>
-        <p style="text-align:center; line-height:2;">
-            👤 <b>@Fantay3</b><br>
-            📱 <b>0931206217</b><br>
-            🏫 <b>O'TECH Academy</b>
-        </p>
-        <button class="btn back-btn" onclick="showScreen('screen-main')">← Back to Menu</button>
+        <div class="header"><h1>📞 Contact</h1></div>
+        <p style="text-align:center;line-height:2;">👤 @Fantay3<br>📱 0931206217<br>🏫 O'TECH Academy</p>
+        <button class="btn back-btn" onclick="showScreen('screen-main')">← Back</button>
     </div>
-
-    <!-- BOOKMARKS -->
     <div id="screen-bookmarks" class="hidden">
-        <div class="header"><h1>⭐ Saved Bookmarks</h1></div>
-        <div id="bookmark-list" class="btn-grid">
-            <p style="text-align:center; opacity:0.7;">No bookmarks yet. Star a chapter to save it!</p>
-        </div>
-        <button class="btn back-btn" onclick="showScreen('screen-main')">← Back to Menu</button>
+        <div class="header"><h1>⭐ Bookmarks</h1></div>
+        <div id="bookmark-list" class="btn-grid"><p style="text-align:center;opacity:0.7;">No bookmarks yet.</p></div>
+        <button class="btn back-btn" onclick="showScreen('screen-main')">← Back</button>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
-
+        tg.ready(); tg.expand();
         const BOT_USERNAME = "myhighschoolstudybot";
 
         // ==================== THEME ====================
@@ -286,7 +306,16 @@
             }
         };
 
-        let currentGrade = null, currentStream = null, allSubjects = {};
+        // Quiz data (add more chapters here)
+        const QUIZZES = {
+            "grade9_physics_1": [
+                { question: "Q1: What is the main purpose of physics?", options: ["To study only living organisms", "To describe and understand the natural world", "To focus only on computers", "To study historical events"], correct: 1, explanation: "B is correct. Physics explains how the universe works — matter, energy, motion, and natural phenomena. A=Biology, C=too narrow, D=History." },
+                { question: "Q2: Which branch of physics studies light?", options: ["Acoustics", "Thermodynamics", "Optics", "Nuclear Physics"], correct: 2, explanation: "C is correct. Optics studies light, its behavior, and interactions with mirrors and lenses. A=sound, B=heat, D=atomic nuclei." },
+                { question: "Q3: Which physicist developed relativity?", options: ["Isaac Newton", "Michael Faraday", "Albert Einstein", "Marie Curie"], correct: 2, explanation: "C is correct. Einstein developed relativity, changing how we understand space and time. A=gravity laws, B=electromagnetism, D=radioactivity." }
+            ]
+        };
+
+        let currentGrade = null, currentStream = null, currentSubject = null, currentChapter = null, allSubjects = {}, quizScore = 0, quizAnswered = 0;
 
         // ==================== NAVIGATION ====================
         function showScreen(id) {
@@ -295,32 +324,26 @@
             if (id === 'screen-bookmarks') loadBookmarks();
         }
 
-        function openBot(command) {
-            window.location.href = `https://t.me/${BOT_USERNAME}?start=${command}`;
-        }
+        function openBot(command) { window.location.href = `https://t.me/${BOT_USERNAME}?start=${command}`; }
 
         function selectGrade(gradeId) {
             currentGrade = gradeId;
             const grade = grades[gradeId];
-            if (grade.streams) { showStreamSelection(grade); }
-            else { showSubjectSelection(grade.subjects, grade.name); }
+            if (grade.streams) showStreamSelection(grade);
+            else showSubjectSelection(grade.subjects, grade.name);
         }
-
         function showStreamSelection(grade) {
             document.getElementById('subject-header').textContent = grade.name;
             const container = document.getElementById('subject-buttons');
             container.innerHTML = '';
             document.getElementById('subject-search').classList.add('hidden');
             for (const [id, stream] of Object.entries(grade.streams)) {
-                const btn = document.createElement('button');
-                btn.className = 'btn';
-                btn.textContent = stream.name;
+                const btn = document.createElement('button'); btn.className = 'btn'; btn.textContent = stream.name;
                 btn.onclick = () => { currentStream = id; showSubjectSelection(stream.subjects, stream.name); };
                 container.appendChild(btn);
             }
             showScreen('screen-subjects');
         }
-
         function showSubjectSelection(subjects, title) {
             allSubjects = subjects;
             document.getElementById('subject-header').textContent = title;
@@ -329,176 +352,148 @@
             renderSubjects(subjects);
             showScreen('screen-subjects');
         }
-
         function renderSubjects(subjects) {
             const container = document.getElementById('subject-buttons');
             container.innerHTML = '';
             for (const [id, name] of Object.entries(subjects)) {
-                const btn = document.createElement('button');
-                btn.className = 'btn';
-                btn.textContent = name;
+                const btn = document.createElement('button'); btn.className = 'btn'; btn.textContent = name;
                 btn.onclick = () => selectSubject(id, name);
                 container.appendChild(btn);
             }
         }
-
         function filterSubjects(query) {
             const filtered = {};
-            for (const [id, name] of Object.entries(allSubjects)) {
-                if (name.toLowerCase().includes(query.toLowerCase())) filtered[id] = name;
-            }
+            for (const [id, name] of Object.entries(allSubjects)) { if (name.toLowerCase().includes(query.toLowerCase())) filtered[id] = name; }
             renderSubjects(filtered);
         }
-
         function selectSubject(subjectId, subjectName) {
+            currentSubject = subjectId;
             const chapters = ["Chapter 1 (Free)", "Chapter 2", "Chapter 3", "Chapter 4", "Chapter 5"];
             document.getElementById('chapter-header').textContent = subjectName;
             const container = document.getElementById('chapter-buttons');
             container.innerHTML = '';
             chapters.forEach((ch, i) => {
-                const row = document.createElement('div');
-                row.style.display = 'flex';
-                row.style.alignItems = 'center';
-                row.style.gap = '8px';
-
-                const btn = document.createElement('button');
-                btn.className = 'btn' + (i === 0 ? ' gold' : '');
-                btn.textContent = ch;
-                btn.style.flex = '1';
-                btn.onclick = () => {
-                    let cmd = `ch_${currentGrade}_${subjectId}_${i + 1}`;
-                    if (currentStream) cmd += `_${currentStream}`;
-                    openBot(cmd);
-                };
-
-                const star = document.createElement('span');
-                star.className = 'bookmark-star';
-                star.textContent = '☆';
-                star.onclick = (e) => { e.stopPropagation(); toggleBookmark(currentGrade, subjectId, i + 1, subjectName, ch, star); };
-                const key = `${currentGrade}_${subjectId}_${i + 1}`;
+                const row = document.createElement('div'); row.style.display = 'flex'; row.style.alignItems = 'center'; row.style.gap = '8px';
+                const btn = document.createElement('button'); btn.className = 'btn' + (i === 0 ? ' gold' : ''); btn.textContent = ch; btn.style.flex = '1';
+                btn.onclick = () => { currentChapter = i + 1; openQuiz(currentGrade, currentSubject, currentChapter); };
+                const star = document.createElement('span'); star.className = 'bookmark-star'; star.textContent = '☆';
+                star.onclick = (e) => { e.stopPropagation(); toggleBookmark(currentGrade, currentSubject, i + 1, subjectName, ch, star); };
+                const key = `${currentGrade}_${currentSubject}_${i + 1}`;
                 if (getBookmarks().find(b => b.key === key)) { star.textContent = '★'; star.classList.add('saved'); }
-
-                row.appendChild(btn);
-                row.appendChild(star);
-                container.appendChild(row);
+                row.appendChild(btn); row.appendChild(star); container.appendChild(row);
             });
             showScreen('screen-chapters');
         }
-
         function goBackToSubjects() {
-            if (currentGrade) {
-                const grade = grades[currentGrade];
-                if (grade.streams) showStreamSelection(grade);
-                else showSubjectSelection(grade.subjects, grade.name);
+            if (currentGrade) { const grade = grades[currentGrade]; if (grade.streams) showStreamSelection(grade); else showSubjectSelection(grade.subjects, grade.name); }
+        }
+        function goBackToChapters() { showScreen('screen-chapters'); }
+
+        // ==================== QUIZ ====================
+        function openQuiz(gradeId, subjectId, chapterNum) {
+            const quizKey = `${gradeId}_${subjectId}_${chapterNum}`;
+            const questions = QUIZZES[quizKey] || [];
+            if (questions.length === 0) { openBot(`ch_${gradeId}_${subjectId}_${chapterNum}`); return; }
+
+            document.getElementById('quiz-title').textContent = `${grades[gradeId]?.name || ''} ${subjectId} Chapter ${chapterNum}`;
+            document.getElementById('quiz-container').innerHTML = '';
+            document.getElementById('quiz-finish-btn').style.display = 'none';
+            quizScore = 0; quizAnswered = 0;
+            updateScoreDisplay();
+
+            questions.forEach((q, qi) => {
+                const div = document.createElement('div'); div.className = 'quiz-question';
+                div.innerHTML = `<h3>${q.question}</h3>`;
+                q.options.forEach((opt, oi) => {
+                    const optDiv = document.createElement('div'); optDiv.className = 'quiz-option'; optDiv.textContent = opt;
+                    optDiv.onclick = () => checkAnswer(div, qi, oi, q.correct, q.explanation);div.appendChild(optDiv);
+                });
+                document.getElementById('quiz-container').appendChild(div);
+            });
+            document.getElementById('quiz-container').appendChild(document.getElementById('quiz-finish-btn'));
+            showScreen('screen-quiz');
+        }
+
+        function checkAnswer(container, qi, selected, correct, explanation) {
+            if (container.dataset.answered) return;
+            container.dataset.answered = 'true';
+            const options = container.querySelectorAll('.quiz-option');
+            options.forEach((opt, i) => {
+                opt.classList.add('disabled');
+                if (i === correct) opt.classList.add('correct');
+                if (i === selected && selected !== correct) opt.classList.add('wrong');
+            });
+            const expDiv = document.createElement('div'); expDiv.className = 'explanation';
+            expDiv.textContent = (selected === correct ? '✅ Correct! ' : '❌ Wrong. ') + explanation;
+            container.appendChild(expDiv);
+            if (selected === correct) quizScore++;
+            quizAnswered++;
+            updateScoreDisplay();
+            if (quizAnswered === QUIZZES[`${currentGrade}_${currentSubject}_${currentChapter}`].length) {
+                document.getElementById('quiz-finish-btn').style.display = 'block';
             }
         }
 
-        // ==================== BOOKMARKS ====================
-        function getBookmarks() {
-            try { return JSON.parse(localStorage.getItem('otech-bookmarks') || '[]'); } catch (e) { return []; }
+        function updateScoreDisplay() {
+            document.getElementById('quiz-score').textContent = `Score: ${quizScore}/${QUIZZES[`${currentGrade}_${currentSubject}_${currentChapter}`]?.length || 0}`;
         }
-        function saveBookmarks(arr) { localStorage.setItem('otech-bookmarks', JSON.stringify(arr)); }
 
+        function finishQuiz() {
+            const total = QUIZZES[`${currentGrade}_${currentSubject}_${currentChapter}`]?.length || 0;
+            alert(`Quiz complete! You got ${quizScore} out of ${total}.`);
+            showScreen('screen-chapters');
+        }
+
+        // ==================== BOOKMARKS ====================
+        function getBookmarks() { try { return JSON.parse(localStorage.getItem('otech-bookmarks') || '[]'); } catch (e) { return []; } }
+        function saveBookmarks(arr) { localStorage.setItem('otech-bookmarks', JSON.stringify(arr)); }
         function toggleBookmark(gradeId, subjectId, chapterNum, subjectName, chapterName, starEl) {
-            let bookmarks = getBookmarks();
-            const key = `${gradeId}_${subjectId}_${chapterNum}`;
+            let bookmarks = getBookmarks(); const key = `${gradeId}_${subjectId}_${chapterNum}`;
             const idx = bookmarks.findIndex(b => b.key === key);
             if (idx >= 0) { bookmarks.splice(idx, 1); starEl.textContent = '☆'; starEl.classList.remove('saved'); }
             else { bookmarks.push({ key, gradeId, subjectId, chapterNum, subjectName, chapterName }); starEl.textContent = '★'; starEl.classList.add('saved'); }
             saveBookmarks(bookmarks);
         }
-
         function loadBookmarks() {
             const container = document.getElementById('bookmark-list');
             const bookmarks = getBookmarks();
-            if (bookmarks.length === 0) {
-                container.innerHTML = '<p style="text-align:center;opacity:0.7;">No bookmarks yet. Star a chapter to save it!</p>';
-                return;
-            }
+            if (bookmarks.length === 0) { container.innerHTML = '<p style="text-align:center;opacity:0.7;">No bookmarks yet.</p>'; return; }
             container.innerHTML = '';
             bookmarks.forEach(b => {
-                const btn = document.createElement('button');
-                btn.className = 'btn';
+                const btn = document.createElement('button'); btn.className = 'btn';
                 btn.textContent = `⭐ ${b.subjectName} — ${b.chapterName}`;
-                btn.onclick = () => {
-                    currentGrade = b.gradeId;
-                    let cmd = `ch_${b.gradeId}_${b.subjectId}_${b.chapterNum}`;
-                    openBot(cmd);
-                };
+                btn.onclick = () => { currentGrade = b.gradeId; currentSubject = b.subjectId; currentChapter = b.chapterNum; openQuiz(b.gradeId, b.subjectId, b.chapterNum); };
                 container.appendChild(btn);
             });
         }
 
-        // ==================== AI TEACHER (via free proxy, no keys exposed) ====================
-async function askAI() {
-    const input = document.getElementById('ai-input');
-    const question = input.value.trim();
-    if (!question) return;
-    input.value = '';
-
-    const chat = document.getElementById('ai-chat');
-    chat.innerHTML += `<div class="ai-message user">${question}</div>`;
-    const loadingId = 'ai-loading-' + Date.now();
-    chat.innerHTML += `<div class="ai-message bot" id="${loadingId}">Thinking...</div>`;
-    chat.scrollTop = chat.scrollHeight;
-
-    let answer = null;
-
-    // Try DuckDuckGo AI (free, no key needed)
-    try {
-        const ddgRes = await fetch('https://duckduckgo.com/duckchat/v1/chat', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-vqd-4': await getDDGToken()
-            },
-            body: JSON.stringify({
-                model: 'gpt-4o-mini',
-                messages: [
-                    { role: 'system', content: 'You are a friendly teacher at O\'TECH Academy. Answer simply. Default English.' },
-                    { role: 'user', content: question }
-                ]
-            })
-        });
-        if (ddgRes.ok) {
-            const text = await ddgRes.text();
-            const lines = text.split('\n');
-            for (const line of lines) {
-                if (line.startsWith('data: ') && line !== 'data: [DONE]') {
-                    try { const d = JSON.parse(line.slice(6)); if (d.message) answer = d.message; } catch(e){}
-                }
+        // ==================== AI TEACHER ====================
+        async function askAI() {
+            const input = document.getElementById('ai-input'); const question = input.value.trim(); if (!question) return; input.value = '';
+            const chat = document.getElementById('ai-chat');
+            chat.innerHTML += `<div class="ai-message user">${question}</div>`;
+            const loadingId = 'ai-loading-' + Date.now();
+            chat.innerHTML += `<div class="ai-message bot" id="${loadingId}">Thinking...</div>`;
+            chat.scrollTop = chat.scrollHeight;
+            let answer = null;
+            try {
+                const res = await fetch('https://text.pollinations.ai/openai', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model: 'openai', messages: [{ role: 'system', content: 'You are a friendly teacher at O\'TECH Academy. Answer simply. Default English.' }, { role: 'user', content: question }], temperature: 0.7, max_tokens: 1000 })
+                });
+                if (res.ok) { const data = await res.json(); answer = data.choices?.[0]?.message?.content; }
+            } catch (e) {}
+            if (!answer) {
+                try {
+                    document.getElementById(loadingId).textContent = 'Trying backup...';
+                    const pollRes = await fetch(`https://text.pollinations.ai/${encodeURIComponent(question)}`);
+                    if (pollRes.ok) { answer = await pollRes.text(); if (!answer || answer.length < 5) answer = null; }
+                } catch (e) {}
             }
+            document.getElementById(loadingId).remove();
+            chat.innerHTML += answer ? `<div class="ai-message bot">${answer}</div>` : `<div class="ai-message bot">❌ AI unavailable. Try again.</div>`;
+            chat.scrollTop = chat.scrollHeight;
         }
-    } catch (e) { console.log('DDG failed'); }
-
-    // Fallback to Pollinations AI (free, no key needed)
-    if (!answer) {
-        try {
-            document.getElementById(loadingId).textContent = 'Trying backup AI...';
-            const pollRes = await fetch(`https://text.pollinations.ai/${encodeURIComponent(question)}`);
-            if (pollRes.ok) {
-                answer = await pollRes.text();
-                if (!answer || answer.length < 5) answer = null;
-            }
-        } catch (e) { console.log('Pollinations failed'); }
-    }
-
-    // Remove loading
-    document.getElementById(loadingId).remove();
-
-    if (answer) {
-        chat.innerHTML += `<div class="ai-message bot">${answer}</div>`;
-    } else {
-        chat.innerHTML += `<div class="ai-message bot">❌ AI Teacher is temporarily unavailable. Please try again in a moment.</div>`;
-    }
-    chat.scrollTop = chat.scrollHeight;
-}
-
-// Helper to get DuckDuckGo token
-async function getDDGToken() {
-    const res = await fetch('https://duckduckgo.com/duckchat/v1/status', { headers: { 'x-vqd-accept': '1' } });
-    return res.headers.get('x-vqd-4') || '';
-}
     </script>
 </body>
 </html>
