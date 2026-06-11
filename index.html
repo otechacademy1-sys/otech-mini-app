@@ -238,7 +238,7 @@
         <button class="btn back-btn" onclick="showScreen('screen-main')">← Back to Menu</button>
     </div>
 
-    <!-- TELEBIRR / BANK / CONTACT / BOOKMARKS (same as before) -->
+    <!-- TELEBIRR / BANK / CONTACT / BOOKMARKS -->
     <div id="screen-telebirr" class="hidden">
         <div class="header"><h1>💳 Telebirr</h1></div>
         <p style="text-align:center;line-height:2;">Send 200 Birr to:<br>📱 0931206217<br>👤 Fantay Zenebe</p>
@@ -306,7 +306,6 @@
             }
         };
 
-        // Quiz data (add more chapters here)
         const QUIZZES = {
             "grade9_physics_1": [
                 { question: "Q1: What is the main purpose of physics?", options: ["To study only living organisms", "To describe and understand the natural world", "To focus only on computers", "To study historical events"], correct: 1, explanation: "B is correct. Physics explains how the universe works — matter, energy, motion, and natural phenomena. A=Biology, C=too narrow, D=History." },
@@ -323,9 +322,7 @@
             document.getElementById(id).classList.remove('hidden');
             if (id === 'screen-bookmarks') loadBookmarks();
         }
-
         function openBot(command) { window.location.href = `https://t.me/${BOT_USERNAME}?start=${command}`; }
-
         function selectGrade(gradeId) {
             currentGrade = gradeId;
             const grade = grades[gradeId];
@@ -394,26 +391,24 @@
             const quizKey = `${gradeId}_${subjectId}_${chapterNum}`;
             const questions = QUIZZES[quizKey] || [];
             if (questions.length === 0) { openBot(`ch_${gradeId}_${subjectId}_${chapterNum}`); return; }
-
             document.getElementById('quiz-title').textContent = `${grades[gradeId]?.name || ''} ${subjectId} Chapter ${chapterNum}`;
             document.getElementById('quiz-container').innerHTML = '';
             document.getElementById('quiz-finish-btn').style.display = 'none';
             quizScore = 0; quizAnswered = 0;
             updateScoreDisplay();
-
             questions.forEach((q, qi) => {
                 const div = document.createElement('div'); div.className = 'quiz-question';
                 div.innerHTML = `<h3>${q.question}</h3>`;
                 q.options.forEach((opt, oi) => {
                     const optDiv = document.createElement('div'); optDiv.className = 'quiz-option'; optDiv.textContent = opt;
-                    optDiv.onclick = () => checkAnswer(div, qi, oi, q.correct, q.explanation);div.appendChild(optDiv);
+                    optDiv.onclick = () => checkAnswer(div, qi, oi, q.correct, q.explanation);
+                    div.appendChild(optDiv);
                 });
                 document.getElementById('quiz-container').appendChild(div);
             });
             document.getElementById('quiz-container').appendChild(document.getElementById('quiz-finish-btn'));
             showScreen('screen-quiz');
         }
-
         function checkAnswer(container, qi, selected, correct, explanation) {
             if (container.dataset.answered) return;
             container.dataset.answered = 'true';
@@ -433,11 +428,9 @@
                 document.getElementById('quiz-finish-btn').style.display = 'block';
             }
         }
-
         function updateScoreDisplay() {
             document.getElementById('quiz-score').textContent = `Score: ${quizScore}/${QUIZZES[`${currentGrade}_${currentSubject}_${currentChapter}`]?.length || 0}`;
         }
-
         function finishQuiz() {
             const total = QUIZZES[`${currentGrade}_${currentSubject}_${currentChapter}`]?.length || 0;
             alert(`Quiz complete! You got ${quizScore} out of ${total}.`);
@@ -467,7 +460,7 @@
             });
         }
 
-        // ==================== AI TEACHER ====================
+        // ==================== AI TEACHER (Multi Free API Fallback) ====================
         async function askAI() {
             const input = document.getElementById('ai-input'); const question = input.value.trim(); if (!question) return; input.value = '';
             const chat = document.getElementById('ai-chat');
@@ -476,20 +469,46 @@
             chat.innerHTML += `<div class="ai-message bot" id="${loadingId}">Thinking...</div>`;
             chat.scrollTop = chat.scrollHeight;
             let answer = null;
+
+            // Try 1: Pollinations AI (free, no key)
             try {
                 const res = await fetch('https://text.pollinations.ai/openai', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ model: 'openai', messages: [{ role: 'system', content: 'You are a friendly teacher at O\'TECH Academy. Answer simply. Default English.' }, { role: 'user', content: question }], temperature: 0.7, max_tokens: 1000 })
+                    body: JSON.stringify({ model: 'openai', messages: [{ role: 'user', content: question }], temperature: 0.7 })
                 });
-                if (res.ok) { const data = await res.json(); answer = data.choices?.[0]?.message?.content; }
+                if (res.ok) { const data = await res.json(); if (data.choices?.[0]?.message?.content) answer = data.choices[0].message.content; }
             } catch (e) {}
+
+            // Try 2: Pollinations text (free, no key)
             if (!answer) {
                 try {
                     document.getElementById(loadingId).textContent = 'Trying backup...';
-                    const pollRes = await fetch(`https://text.pollinations.ai/${encodeURIComponent(question)}`);
-                    if (pollRes.ok) { answer = await pollRes.text(); if (!answer || answer.length < 5) answer = null; }
+                    const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(question)}`);
+                    if (res.ok) { const text = await res.text(); if (text && text.length > 5 && !text.includes('error')) answer = text; }
                 } catch (e) {}
             }
+
+            // Try 3: DuckDuckGo AI (free, no key)
+            if (!answer) {
+                try {
+                    document.getElementById(loadingId).textContent = 'Trying another AI...';
+                    const vqd = await (await fetch('https://duckduckgo.com/duckchat/v1/status', { headers: { 'x-vqd-accept': '1' } })).headers.get('x-vqd-4');
+                    const ddgRes = await fetch('https://duckduckgo.com/duckchat/v1/chat', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-vqd-4': vqd },
+                        body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'user', content: question }] })
+                    });
+                    if (ddgRes.ok) {
+                        const text = await ddgRes.text();
+                        const lines = text.split('\n');
+                        for (const line of lines) {
+                            if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+                                try { const d = JSON.parse(line.slice(6)); if (d.message) answer = d.message; } catch(e){}
+                            }
+                        }
+                    }
+                } catch (e) {}
+            }
+
             document.getElementById(loadingId).remove();
             chat.innerHTML += answer ? `<div class="ai-message bot">${answer}</div>` : `<div class="ai-message bot">❌ AI unavailable. Try again.</div>`;
             chat.scrollTop = chat.scrollHeight;
