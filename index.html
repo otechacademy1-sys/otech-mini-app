@@ -430,40 +430,84 @@
         }
 
         // ==================== AI TEACHER ====================
-        async function askAI() {
-            const input = document.getElementById('ai-input');
-            const question = input.value.trim();
-            if (!question) return;
-            input.value = '';
+        // ==================== AI TEACHER (NVIDIA first, Groq fallback) ====================
+async function askAI() {
+    const input = document.getElementById('ai-input');
+    const question = input.value.trim();
+    if (!question) return;
+    input.value = '';
 
-            const chat = document.getElementById('ai-chat');
-            chat.innerHTML += `<div class="ai-message user">${question}</div>`;
-            chat.innerHTML += `<div class="ai-message bot" id="ai-loading">Thinking...</div>`;
-            chat.scrollTop = chat.scrollHeight;
+    const chat = document.getElementById('ai-chat');
+    chat.innerHTML += `<div class="ai-message user">${question}</div>`;
+    const loadingId = 'ai-loading-' + Date.now();
+    chat.innerHTML += `<div class="ai-message bot" id="${loadingId}">Thinking...</div>`;
+    chat.scrollTop = chat.scrollHeight;
 
-            try {
-                const res = await fetch('https://text.pollinations.ai/openai', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        model: 'openai',
-                        messages: [
-                            { role: 'system', content: 'You are a friendly teacher at O\'TECH Academy. Answer simply and clearly. Default language is English. Only use Amharic if the student asks in Amharic.' },
-                            { role: 'user', content: question }
-                        ],
-                        temperature: 0.7, max_tokens: 1000
-                    })
-                });
-                const data = await res.json();
-                const answer = data.choices?.[0]?.message?.content || 'Sorry, I could not answer that.';
-                document.getElementById('ai-loading').remove();
-                chat.innerHTML += `<div class="ai-message bot">${answer}</div>`;
-            } catch (e) {
-                document.getElementById('ai-loading').remove();
-                chat.innerHTML += `<div class="ai-message bot">❌ AI unavailable. Try again.</div>`;
-            }
-            chat.scrollTop = chat.scrollHeight;
+    let answer = null;
+
+    // Try NVIDIA first (70B - smartest)
+    try {
+        const nvidiaRes = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer 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'
+            },
+            body: JSON.stringify({
+                model: 'abacusai/dracarys-llama-3.1-70b-instruct',
+                messages: [
+                    { role: 'system', content: 'You are a friendly teacher at O\'TECH Academy. Answer simply. Default English. Only Amharic if asked in Amharic.' },
+                    { role: 'user', content: question }
+                ],
+                temperature: 0.7, max_tokens: 1000
+            })
+        });
+        if (nvidiaRes.ok) {
+            const data = await nvidiaRes.json();
+            answer = data.choices?.[0]?.message?.content;
         }
+    } catch (e) {
+        console.log('NVIDIA failed, trying Groq...');
+    }
+
+    // Fallback to Groq (17B - faster)
+    if (!answer) {
+        try {
+            document.getElementById(loadingId).textContent = 'NVIDIA busy, trying Groq...';
+            const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer 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'
+                },
+                body: JSON.stringify({
+                    model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+                    messages: [
+                        { role: 'system', content: 'You are a friendly teacher at O\'TECH Academy. Answer simply. Default English. Only Amharic if asked in Amharic.' },
+                        { role: 'user', content: question }
+                    ],
+                    temperature: 0.7, max_tokens: 1000
+                })
+            });
+            if (groqRes.ok) {
+                const data = await groqRes.json();
+                answer = data.choices?.[0]?.message?.content;
+            }
+        } catch (e) {
+            console.log('Groq also failed.');
+        }
+    }
+
+    // Remove loading, show result
+    document.getElementById(loadingId).remove();
+
+    if (answer) {
+        chat.innerHTML += `<div class="ai-message bot">${answer}</div>`;
+    } else {
+        chat.innerHTML += `<div class="ai-message bot">❌ AI Teacher is temporarily unavailable. Please try again in a moment.</div>`;
+    }
+    chat.scrollTop = chat.scrollHeight;
+}
     </script>
 </body>
 </html>
