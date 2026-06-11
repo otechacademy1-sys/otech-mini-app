@@ -212,6 +212,7 @@
         <div class="score-display" id="quiz-score"></div>
         <div id="quiz-container"></div>
         <button class="btn gold" id="quiz-finish-btn" onclick="finishQuiz()" style="display:none;">Finish Quiz</button>
+        <button class="btn green" onclick="getPDF()" style="margin-top:10px;">📥 Get Chapter PDF</button>
         <button class="btn back-btn" onclick="goBackToChapters()">← Back to Chapters</button>
     </div>
 
@@ -433,8 +434,13 @@
         }
         function finishQuiz() {
             const total = QUIZZES[`${currentGrade}_${currentSubject}_${currentChapter}`]?.length || 0;
-            alert(`Quiz complete! You got ${quizScore} out of ${total}.`);
-            showScreen('screen-chapters');
+            alert(`Quiz complete! You got ${quizScore} out of ${total}.\n\nTap OK to get the PDF.`);
+            getPDF();
+        }
+        function getPDF() {
+            let cmd = `ch_${currentGrade}_${currentSubject}_${currentChapter}`;
+            if (currentStream) cmd += `_${currentStream}`;
+            openBot(cmd);
         }
 
         // ==================== BOOKMARKS ====================
@@ -460,39 +466,11 @@
             });
         }
 
-        // ==================== AI TEACHER (Groq with split key) ====================
+        // ==================== AI TEACHER (opens bot chat) ====================
         async function askAI() {
             const input = document.getElementById('ai-input'); const question = input.value.trim(); if (!question) return; input.value = '';
-            const chat = document.getElementById('ai-chat');
-            chat.innerHTML += `<div class="ai-message user">${question}</div>`;
-            const loadingId = 'ai-loading-' + Date.now();
-            chat.innerHTML += `<div class="ai-message bot" id="${loadingId}">Thinking...</div>`;
-            chat.scrollTop = chat.scrollHeight;
-
-            const k = "gs" + "k_" + "4mMhu1cWP5b3nkT4" + "AnmlWGdyb3FY8GMKUoTyDrrUCpFpROLkoZKG";
-
-            try {
-                const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + k },
-                    body: JSON.stringify({
-                        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
-                        messages: [
-                            { role: 'system', content: 'You are a friendly teacher at O\'TECH Academy. Answer simply and clearly. Default language is English.' },
-                            { role: 'user', content: question }
-                        ],
-                        temperature: 0.7, max_tokens: 1000
-                    })
-                });
-                const data = await res.json();
-                const answer = data.choices?.[0]?.message?.content;
-                document.getElementById(loadingId).remove();
-                chat.innerHTML += answer ? `<div class="ai-message bot">${answer}</div>` : `<div class="ai-message bot">❌ No answer. Try again.</div>`;
-            } catch (e) {
-                document.getElementById(loadingId).remove();
-                chat.innerHTML += `<div class="ai-message bot">❌ AI unavailable. Try again.</div>`;
-            }
-            chat.scrollTop = chat.scrollHeight;
+            // Opens bot chat with AI mode
+            openBot('ai_teacher');
         }
     </script>
 </body>
