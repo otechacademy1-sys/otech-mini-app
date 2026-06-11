@@ -429,8 +429,7 @@
             });
         }
 
-        // ==================== AI TEACHER ====================
-        // ==================== AI TEACHER (NVIDIA first, Groq fallback) ====================
+        // ==================== AI TEACHER (via free proxy, no keys exposed) ====================
 async function askAI() {
     const input = document.getElementById('ai-input');
     const question = input.value.trim();
@@ -445,60 +444,46 @@ async function askAI() {
 
     let answer = null;
 
-    // Try NVIDIA first (70B - smartest)
+    // Try DuckDuckGo AI (free, no key needed)
     try {
-        const nvidiaRes = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
+        const ddgRes = await fetch('https://duckduckgo.com/duckchat/v1/chat', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer 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'
+                'x-vqd-4': await getDDGToken()
             },
             body: JSON.stringify({
-                model: 'abacusai/dracarys-llama-3.1-70b-instruct',
+                model: 'gpt-4o-mini',
                 messages: [
-                    { role: 'system', content: 'You are a friendly teacher at O\'TECH Academy. Answer simply. Default English. Only Amharic if asked in Amharic.' },
+                    { role: 'system', content: 'You are a friendly teacher at O\'TECH Academy. Answer simply. Default English.' },
                     { role: 'user', content: question }
-                ],
-                temperature: 0.7, max_tokens: 1000
+                ]
             })
         });
-        if (nvidiaRes.ok) {
-            const data = await nvidiaRes.json();
-            answer = data.choices?.[0]?.message?.content;
+        if (ddgRes.ok) {
+            const text = await ddgRes.text();
+            const lines = text.split('\n');
+            for (const line of lines) {
+                if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+                    try { const d = JSON.parse(line.slice(6)); if (d.message) answer = d.message; } catch(e){}
+                }
+            }
         }
-    } catch (e) {
-        console.log('NVIDIA failed, trying Groq...');
-    }
+    } catch (e) { console.log('DDG failed'); }
 
-    // Fallback to Groq (17B - faster)
+    // Fallback to Pollinations AI (free, no key needed)
     if (!answer) {
         try {
-            document.getElementById(loadingId).textContent = 'NVIDIA busy, trying Groq...';
-            const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer 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'
-                },
-                body: JSON.stringify({
-                    model: 'meta-llama/llama-4-scout-17b-16e-instruct',
-                    messages: [
-                        { role: 'system', content: 'You are a friendly teacher at O\'TECH Academy. Answer simply. Default English. Only Amharic if asked in Amharic.' },
-                        { role: 'user', content: question }
-                    ],
-                    temperature: 0.7, max_tokens: 1000
-                })
-            });
-            if (groqRes.ok) {
-                const data = await groqRes.json();
-                answer = data.choices?.[0]?.message?.content;
+            document.getElementById(loadingId).textContent = 'Trying backup AI...';
+            const pollRes = await fetch(`https://text.pollinations.ai/${encodeURIComponent(question)}`);
+            if (pollRes.ok) {
+                answer = await pollRes.text();
+                if (!answer || answer.length < 5) answer = null;
             }
-        } catch (e) {
-            console.log('Groq also failed.');
-        }
+        } catch (e) { console.log('Pollinations failed'); }
     }
 
-    // Remove loading, show result
+    // Remove loading
     document.getElementById(loadingId).remove();
 
     if (answer) {
@@ -507,6 +492,12 @@ async function askAI() {
         chat.innerHTML += `<div class="ai-message bot">❌ AI Teacher is temporarily unavailable. Please try again in a moment.</div>`;
     }
     chat.scrollTop = chat.scrollHeight;
+}
+
+// Helper to get DuckDuckGo token
+async function getDDGToken() {
+    const res = await fetch('https://duckduckgo.com/duckchat/v1/status', { headers: { 'x-vqd-accept': '1' } });
+    return res.headers.get('x-vqd-4') || '';
 }
     </script>
 </body>
